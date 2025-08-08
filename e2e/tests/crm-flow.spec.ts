@@ -17,85 +17,133 @@ test.describe('CRM End-to-End Flow', () => {
     await page.waitForURL('/leads');
     await page.click('text=Add Lead');
     
-    // Fill lead form (assuming there's a form page)
-    await page.waitForTimeout(1000); // Wait for form to load
+    // Wait for new lead form
+    await page.waitForURL('/leads/new');
+    await expect(page.locator('h1')).toContainText('New Lead');
     
-    // Navigate back to leads list
-    await page.goto('/leads');
-    await expect(page.locator('h1')).toContainText('Leads');
+    // Fill lead form - wait for companies to load first
+    await page.waitForSelector('select[name="companyId"] option:nth-child(2)', { timeout: 5000 });
     
-    // Click on first lead in the list
-    const firstLead = page.locator('table tbody tr').first();
-    await firstLead.locator('text=View').click();
+    // Select first available company
+    const companySelect = page.locator('select[name="companyId"]');
+    const companyOptions = await companySelect.locator('option').all();
+    if (companyOptions.length > 1) {
+      const firstCompanyValue = await companyOptions[1].getAttribute('value');
+      await companySelect.selectOption(firstCompanyValue!);
+    }
     
-    // Wait for lead detail page
-    await page.waitForTimeout(1000);
+    await page.fill('input[name="contactName"]', 'Test Lead E2E');
+    await page.fill('input[name="email"]', 'test.e2e@example.com');
+    await page.fill('input[name="phone"]', '+1-555-0123');
+    await page.selectOption('select[name="source"]', 'WEB');
+    await page.selectOption('select[name="status"]', 'NEW');
+    await page.fill('input[name="score"]', '75');
     
-    // 3. Create a deal (navigate to deals page)
+    // Submit the form
+    await page.click('button:has-text("Create Lead")');
+    
+    // Should redirect to lead detail page
+    await page.waitForURL(/\/leads\/[a-f0-9-]+/);
+    await expect(page.locator('h2')).toContainText('Test Lead E2E');
+    
+    // 3. Create a deal
     await page.click('text=Deals');
     await page.waitForURL('/deals');
     await expect(page.locator('h1')).toContainText('Deals Pipeline');
     
-    // 4. Change deal stage using dropdown (keyboard accessible method)
-    // Find first deal card with a select dropdown
-    const dealCard = page.locator('.bg-white').filter({ hasText: 'Move to stage' }).first();
+    await page.click('text=Add Deal');
+    await page.waitForURL('/deals/new');
     
-    if (await dealCard.count() > 0) {
-      const selectElement = dealCard.locator('select');
-      
-      // Get current stage
-      const currentStage = await selectElement.inputValue();
-      
-      // Change to a different stage
-      const newStage = currentStage === 'PROSPECTING' ? 'PROPOSAL' : 'PROSPECTING';
-      await selectElement.selectOption(newStage);
-      
-      // Wait for update
-      await page.waitForTimeout(1000);
-      
-      // Verify stage changed
-      await expect(selectElement).toHaveValue(newStage);
+    // Wait for leads to load
+    await page.waitForSelector('select[name="leadId"] option:nth-child(2)', { timeout: 5000 });
+    
+    // Select the lead we just created (should be at the top)
+    const leadSelect = page.locator('select[name="leadId"]');
+    const leadOptions = await leadSelect.locator('option').all();
+    if (leadOptions.length > 1) {
+      // Find the option containing our test lead
+      for (const option of leadOptions) {
+        const text = await option.textContent();
+        if (text?.includes('Test Lead E2E')) {
+          const value = await option.getAttribute('value');
+          await leadSelect.selectOption(value!);
+          break;
+        }
+      }
     }
+    
+    await page.fill('input[name="title"]', 'Test Deal E2E');
+    await page.fill('input[name="amount"]', '50000');
+    await page.selectOption('select[name="stage"]', 'PROSPECTING');
+    
+    // Submit the form
+    await page.click('button:has-text("Create Deal")');
+    
+    // Should redirect to deals page
+    await page.waitForURL('/deals');
+    
+    // 4. Change deal stage using dropdown
+    // Wait for the deal card to appear
+    await page.waitForSelector('.bg-white:has-text("Test Deal E2E")', { timeout: 5000 });
+    
+    const dealCard = page.locator('.bg-white').filter({ hasText: 'Test Deal E2E' }).first();
+    const selectElement = dealCard.locator('select');
+    
+    // Change stage
+    await selectElement.selectOption('PROPOSAL');
+    
+    // Wait for update and verify
+    await page.waitForTimeout(1000);
+    await expect(selectElement).toHaveValue('PROPOSAL');
     
     // 5. Add and complete an activity
-    // Navigate to first lead detail
+    // Navigate back to our test lead
     await page.click('text=Leads');
     await page.waitForURL('/leads');
-    const leadToView = page.locator('table tbody tr').first();
-    await leadToView.locator('text=View').click();
     
-    // Wait for lead detail page and activities tab
-    await page.waitForTimeout(1000);
+    // Search for our test lead
+    await page.fill('input[name="search"]', 'Test Lead E2E');
+    await page.click('button:has-text("Search")');
+    await page.waitForTimeout(500);
     
-    // Click Activities tab if not already selected
-    const activitiesTab = page.locator('button:has-text("Activities")');
-    if (await activitiesTab.count() > 0) {
-      await activitiesTab.click();
-    }
+    // Click on the test lead
+    const leadRow = page.locator('table tbody tr').filter({ hasText: 'Test Lead E2E' }).first();
+    await leadRow.locator('text=View').click();
+    
+    // Wait for lead detail page
+    await page.waitForURL(/\/leads\/[a-f0-9-]+/);
+    
+    // Activities should be the default tab
+    await expect(page.locator('button:has-text("Activities")')).toBeVisible();
     
     // Add new activity
-    await page.click('text=Add Activity');
+    await page.click('button:has-text("Add Activity")');
     await page.waitForTimeout(500);
     
     // Fill activity form
     await page.selectOption('select[name="type"]', 'TASK');
-    await page.fill('textarea[name="content"]', 'Follow up with client about proposal');
+    await page.fill('textarea[name="content"]', 'E2E Test Activity');
+    
+    // Set a due date (tomorrow)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dateString = tomorrow.toISOString().slice(0, 16);
+    await page.fill('input[name="dueDate"]', dateString);
+    
     await page.click('button:has-text("Save")');
     
     // Wait for activity to be created
     await page.waitForTimeout(1000);
     
     // Complete the activity
-    const activityCard = page.locator('.bg-white').filter({ hasText: 'Follow up with client' }).first();
-    if (await activityCard.count() > 0) {
-      await activityCard.locator('text=Complete').click();
-      await page.waitForTimeout(500);
-      
-      // Verify activity is marked as completed
-      await expect(activityCard).toContainText('Completed');
-    }
+    const activityCard = page.locator('.bg-white').filter({ hasText: 'E2E Test Activity' }).first();
+    await activityCard.locator('button:has-text("Complete")').click();
+    await page.waitForTimeout(500);
     
-    // Verify we completed the workflow
-    await expect(page.locator('h2')).toBeDefined();
+    // Verify activity is marked as completed
+    await expect(activityCard).toContainText('Completed');
+    
+    // Verify we completed the workflow by checking we're still on a valid page
+    await expect(page.locator('h2')).toBeVisible();
   });
 });
