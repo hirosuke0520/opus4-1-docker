@@ -1,223 +1,353 @@
 # Mini CRM - 社内営業リード・案件管理ツール
 
-営業リード、案件、活動を管理するための社内向けCRMシステムです。
+営業リード、案件、活動を管理するための社内向けフルスタックCRMシステムです。Docker一発起動で即座に利用可能。
 
-## 技術スタック
+## 🚀 主な機能
 
-- **フロントエンド**: Next.js 14 (App Router), TypeScript, Tailwind CSS
-- **バックエンド**: Hono.js, TypeScript
+### 認証・権限
+- ✅ JWT認証（HttpOnlyクッキー、SameSite=Lax）
+- ✅ ローカルユーザー管理（bcryptパスワードハッシュ）
+- ✅ Admin/Memberロール表示
+
+### ダッシュボード
+- ✅ 本日の新規リード数
+- ✅ オープン案件の総額と件数
+- ✅ 今週期限の未完了アクティビティ数
+- ✅ 最新リード・案件の一覧表示
+
+### リード管理
+- ✅ CRUD操作（作成・読取・更新・削除）
+- ✅ 検索機能（名前、メール、電話番号）
+- ✅ フィルタリング（ステータス、企業）
+- ✅ ページネーション
+- ✅ 詳細画面（関連案件・活動のタブ表示）
+- ✅ スコアリング（0-100）
+
+### 案件管理（カンバンボード）
+- ✅ ドラッグ&ドロップでステージ変更
+- ✅ 楽観的更新（即座のUI反映）
+- ✅ エラー時の自動ロールバック
+- ✅ キーボードアクセシビリティ（ドロップダウンでも変更可）
+- ✅ 案件詳細ページ（編集・削除機能付き）
+- ✅ ステージ別の案件総額表示
+
+### 活動管理
+- ✅ タイプ別活動（NOTE/TASK/CALL/EMAIL）
+- ✅ 完了/未完了の切り替え
+- ✅ 期限設定
+- ✅ リード詳細画面でのインライン管理
+
+### 企業管理
+- ✅ CRUD操作
+- ✅ リード数の自動集計表示
+- ✅ ドメイン・メモ管理
+
+## 🛠 技術スタック
+
+- **フロントエンド**: Next.js 14 (App Router), TypeScript, Tailwind CSS, React Hook Form
+- **バックエンド**: Hono.js, TypeScript, Zod
 - **データベース**: MySQL 8
 - **ORM**: Prisma
 - **認証**: JWT (HttpOnly Cookie)
+- **DnD**: @dnd-kit（カンバンボード）
+- **テスト**: Vitest（API）, Playwright（E2E）
 - **コンテナ**: Docker & Docker Compose
 
-## 主な機能
-
-- ✅ ユーザー認証（Email/Password）
-- ✅ ダッシュボード（KPI表示）
-- ✅ リード管理（CRUD、検索、フィルタリング）
-- ✅ 案件管理（カンバンUI、ドラッグ&ドロップ）
-- ✅ 活動管理（タスク、メモ、通話、メール）
-- ✅ 企業管理
-- ✅ 楽観的更新とロールバック
-
-## セットアップ手順
+## 📦 セットアップ
 
 ### 前提条件
-
-- Docker Desktop がインストールされていること
-- Node.js 20+ (ローカル開発用)
+- Docker Desktop
 - Git
+- Node.js 20+ (E2Eテスト実行時のみ)
 
-### 1. リポジトリのクローン
+### クイックスタート（5分で起動）
 
 ```bash
+# 1. リポジトリのクローン
 git clone https://github.com/hirosuke0520/opus4-1-docker.git
 cd opus4-1-docker
-```
 
-### 2. 環境変数の設定
-
-```bash
+# 2. 環境変数の設定
 cp .env.example .env
-```
 
-必要に応じて `.env` ファイルを編集してください。
-
-### 3. Dockerコンテナの起動
-
-```bash
+# 3. Docker起動（初回はビルドに3-5分）
 docker compose up -d
-```
 
-初回起動時は、イメージのビルドに数分かかります。
-
-### 4. データベースのマイグレーション
-
-```bash
+# 4. データベース初期化
 docker compose exec api npm run prisma:migrate
-```
-
-### 5. シードデータの投入
-
-```bash
 docker compose exec api npm run prisma:seed
+
+# 5. ブラウザでアクセス
+open http://localhost:3000
 ```
 
-これにより以下のデータが作成されます：
-- ユーザー: 2件（admin@minicrm.local, member@minicrm.local）
-- 企業: 5件
-- リード: 50件
-- 案件: 30件
-- 活動: 100件
+### アクセスURL
 
-### 6. アプリケーションへのアクセス
-
-- **フロントエンド**: http://localhost:3000
-- **API**: http://localhost:8787
-- **MySQL**: localhost:3306
+| サービス | URL | 説明 |
+|---------|-----|------|
+| フロントエンド | http://localhost:3000 | Next.jsアプリケーション |
+| API | http://localhost:8787 | Hono.js APIサーバー |
+| API Health | http://localhost:8787/health | ヘルスチェック |
+| MySQL | localhost:3306 | データベース |
 
 ### ログイン情報
 
-| Email | Password | Role |
-|-------|----------|------|
-| admin@minicrm.local | admin123 | Admin |
-| member@minicrm.local | member123 | Member |
+| Email | Password | Role | 説明 |
+|-------|----------|------|------|
+| admin@minicrm.local | admin123 | Admin | 管理者アカウント |
+| member@minicrm.local | member123 | Member | 一般ユーザーアカウント |
 
-## 開発
+### 初期データ
+シードコマンド実行後、以下のサンプルデータが投入されます：
+- 👤 ユーザー: 2件
+- 🏢 企業: 5件
+- 📋 リード: 50件
+- 💼 案件: 30件
+- ✅ 活動: 100件
 
-### ローカル開発環境の起動
-
-```bash
-# APIサーバーの開発モード起動
-cd apps/api
-npm install
-npm run dev
-
-# フロントエンドの開発モード起動
-cd apps/web
-npm install
-npm run dev
-```
+## 💻 開発
 
 ### ディレクトリ構成
 
 ```
 opus4-1-docker/
 ├── apps/
-│   ├── api/            # Hono.js APIサーバー
-│   │   ├── prisma/     # Prismaスキーマ、マイグレーション
-│   │   ├── src/        # ソースコード
-│   │   └── tests/      # APIテスト
-│   └── web/            # Next.jsフロントエンド
-│       ├── app/        # App Router
-│       ├── components/ # Reactコンポーネント
-│       └── lib/        # ユーティリティ
-├── e2e/                # Playwright E2Eテスト
-└── docker-compose.yml  # Docker設定
+│   ├── api/                 # Hono.js APIサーバー
+│   │   ├── prisma/         
+│   │   │   ├── schema.prisma   # データベーススキーマ
+│   │   │   └── seed.ts         # シードデータ
+│   │   ├── src/
+│   │   │   ├── routes/         # APIエンドポイント
+│   │   │   ├── middleware/     # 認証・バリデーション
+│   │   │   └── utils/          # ユーティリティ
+│   │   └── tests/              # Vitestテスト
+│   └── web/                 # Next.jsフロントエンド
+│       ├── app/                # App Router
+│       │   ├── dashboard/      # ダッシュボード
+│       │   ├── leads/          # リード管理
+│       │   ├── deals/          # 案件管理（カンバン）
+│       │   └── companies/      # 企業管理
+│       ├── components/         # 共通コンポーネント
+│       └── lib/               # API通信・スキーマ
+├── e2e/                     # Playwright E2Eテスト
+├── docker-compose.yml       # Docker設定
+└── run-e2e-tests.sh        # E2Eテスト実行スクリプト
 ```
 
-## テスト実行
-
-### APIテスト
+### ローカル開発
 
 ```bash
+# Dockerコンテナはそのままで、ホットリロードで開発
+docker compose up -d
+
+# ログ確認
+docker compose logs -f api  # APIサーバーログ
+docker compose logs -f web  # フロントエンドログ
+```
+
+## 🧪 テスト
+
+### APIテスト（Vitest）
+
+```bash
+# Docker内で実行
 docker compose exec api npm test
+
+# カバレッジ付き
+docker compose exec api npm run test:coverage
 ```
 
-テストケース：
-- 認証API（ログイン成功/失敗、バリデーション）
-- リードAPI（検索、ページネーション、フィルタリング）
-- 案件API（ステージ更新の冪等性）
+**テストケース**:
+- ✅ 認証: ログイン成功/失敗、JWT検証、バリデーション
+- ✅ リード: CRUD、検索、ページネーション、フィルタリング
+- ✅ 案件: ステージ更新の冪等性、バリデーション
 
-### E2Eテスト
+### E2Eテスト（Playwright）
 
 ```bash
+# 自動実行スクリプト（推奨）
+./run-e2e-tests.sh
+
+# 手動実行
 cd e2e
 npm install
+npx playwright install chromium
 npm test
+
+# UIモードでデバッグ
+npm run test:ui
 ```
 
-シナリオ：
-1. ログイン
-2. リード作成
-3. 案件作成
-4. カンバンでステージ変更
-5. 活動の追加と完了
+**テストシナリオ**:
+1. ログイン → ダッシュボード表示
+2. リード作成（フォーム入力）
+3. 案件作成（リードに紐付け）
+4. カンバンでステージ変更（ドロップダウン）
+5. 活動の追加と完了切り替え
 
-## API仕様
+## 📡 API仕様
 
-### 認証
+### エンドポイント一覧
 
-- `POST /auth/login` - ログイン
-- `POST /auth/logout` - ログアウト
-- `GET /auth/me` - 現在のユーザー情報
-
-### リソース
-
-- `GET/POST /companies` - 企業一覧/作成
-- `GET/PATCH/DELETE /companies/:id` - 企業詳細/更新/削除
-- `GET/POST /leads` - リード一覧/作成（検索、フィルタ対応）
-- `GET/PATCH/DELETE /leads/:id` - リード詳細/更新/削除
-- `GET/POST /deals` - 案件一覧/作成
-- `GET/PATCH/DELETE /deals/:id` - 案件詳細/更新/削除
-- `GET/POST /activities` - 活動一覧/作成
-- `GET/PATCH/DELETE /activities/:id` - 活動詳細/更新/削除
+| メソッド | パス | 説明 | 認証 |
+|---------|------|------|------|
+| **認証** |
+| POST | `/auth/login` | ログイン（JWT発行） | ❌ |
+| POST | `/auth/logout` | ログアウト | ✅ |
+| GET | `/auth/me` | 現在のユーザー情報 | ✅ |
+| **企業** |
+| GET | `/companies` | 企業一覧 | ✅ |
+| POST | `/companies` | 企業作成 | ✅ |
+| GET | `/companies/:id` | 企業詳細 | ✅ |
+| PATCH | `/companies/:id` | 企業更新 | ✅ |
+| DELETE | `/companies/:id` | 企業削除 | ✅ |
+| **リード** |
+| GET | `/leads` | リード一覧（検索・フィルタ） | ✅ |
+| POST | `/leads` | リード作成 | ✅ |
+| GET | `/leads/:id` | リード詳細（関連データ含む） | ✅ |
+| PATCH | `/leads/:id` | リード更新 | ✅ |
+| DELETE | `/leads/:id` | リード削除 | ✅ |
+| **案件** |
+| GET | `/deals` | 案件一覧（ステージ別） | ✅ |
+| POST | `/deals` | 案件作成 | ✅ |
+| GET | `/deals/:id` | 案件詳細 | ✅ |
+| PATCH | `/deals/:id` | 案件更新（ステージ変更含む） | ✅ |
+| DELETE | `/deals/:id` | 案件削除 | ✅ |
+| **活動** |
+| GET | `/activities` | 活動一覧 | ✅ |
+| POST | `/activities` | 活動作成 | ✅ |
+| GET | `/activities/:id` | 活動詳細 | ✅ |
+| PATCH | `/activities/:id` | 活動更新（完了切替含む） | ✅ |
+| DELETE | `/activities/:id` | 活動削除 | ✅ |
 
 ### クエリパラメータ
 
-- `page` - ページ番号（デフォルト: 1）
-- `pageSize` - ページサイズ（デフォルト: 20）
-- `q` - 検索クエリ（リードの名前/メール/電話）
-- `status` - ステータスフィルタ
-- `companyId` - 企業IDフィルタ
+| パラメータ | 説明 | 使用例 |
+|-----------|------|--------|
+| `page` | ページ番号（デフォルト: 1） | `?page=2` |
+| `pageSize` | 1ページの件数（デフォルト: 20） | `?pageSize=50` |
+| `q` | 検索クエリ（名前/メール/電話） | `?q=john` |
+| `status` | ステータスフィルタ | `?status=NEW` |
+| `companyId` | 企業IDフィルタ | `?companyId=uuid` |
+| `stage` | 案件ステージフィルタ | `?stage=PROPOSAL` |
+| `completed` | 活動の完了状態 | `?completed=false` |
 
-## パフォーマンス最適化
+## 🔒 セキュリティ
 
-- データベースインデックス設定済み
-- N+1問題対策（Prisma include/select）
-- 楽観的更新（カンバンUI）
-- サーバーサイドページネーション
+### 実装済みセキュリティ対策
 
-## セキュリティ
+- 🔐 **JWT認証**: HttpOnlyクッキー、7日間有効
+- 🛡️ **CSRF保護**: Originヘッダーチェック（同一オリジンのみ許可）
+- 🔑 **パスワード**: bcryptハッシュ化（salt rounds: 10）
+- ✅ **バリデーション**: Zodスキーマによる入力検証
+- 🚫 **SQLインジェクション対策**: Prisma ORMのプリペアドステートメント
+- 📝 **エラーハンドリング**: 統一フォーマット、詳細情報の隠蔽
 
-- JWT認証（HttpOnly Cookie）
-- CSRF保護（Originチェック）
-- パスワードハッシュ化（bcrypt）
-- 入力バリデーション（Zod）
+## ⚡ パフォーマンス最適化
 
-## トラブルシューティング
+- **データベースインデックス**
+  - `Lead(status, createdAt)`: ステータス別の最新リード取得
+  - `Deal(stage)`: カンバンボードの高速表示
+  - `Activity(leadId, completed, dueDate)`: 活動の効率的なフィルタリング
 
-### コンテナが起動しない
+- **N+1問題対策**
+  - Prismaの`include`/`select`を活用
+  - 関連データの一括取得
+
+- **楽観的更新**
+  - カンバンボードで即座のUI反映
+  - 失敗時の自動ロールバック
+
+- **ページネーション**
+  - サーバーサイド実装
+  - 大量データ対応
+
+## 🐛 トラブルシューティング
+
+### よくある問題と解決方法
+
+| 問題 | 原因 | 解決方法 |
+|------|------|----------|
+| **コンテナが起動しない** | Dockerが起動していない | Docker Desktopを起動 |
+| **ポート競合エラー** | 3000/8787番ポートが使用中 | `.env`でポート変更 |
+| **データベース接続エラー** | MySQLが起動していない | `docker compose restart db` |
+| **マイグレーションエラー** | スキーマ不整合 | `docker compose exec api npx prisma migrate reset` |
+| **ログインできない** | シードデータ未投入 | `docker compose exec api npm run prisma:seed` |
+| **画面が表示されない** | ビルドエラー | `docker compose down && docker compose up -d --build` |
+
+### デバッグコマンド
 
 ```bash
-# コンテナの状態確認
+# コンテナ状態確認
 docker compose ps
 
-# ログ確認
-docker compose logs api
-docker compose logs web
-docker compose logs db
+# リアルタイムログ
+docker compose logs -f
+
+# 特定サービスのログ
+docker compose logs api -n 100  # 最新100行
+docker compose logs web --since 5m  # 過去5分
+
+# コンテナに入る
+docker compose exec api sh
+docker compose exec web sh
+
+# データベース確認
+docker compose exec db mysql -uroot -ppassword minicrm
+
+# 完全リセット
+docker compose down -v  # ボリューム含めて削除
+docker compose up -d --build
 ```
 
-### データベース接続エラー
+## 📊 データモデル
 
-```bash
-# データベースの再起動
-docker compose restart db
+### ER図概要
 
-# マイグレーションの再実行
-docker compose exec api npx prisma migrate reset
+```
+User (認証)
+  ├─ email (unique)
+  ├─ passwordHash
+  └─ role (ADMIN/MEMBER)
+
+Company ─── Lead ─── Deal
+    │        │        └─ stage (5段階)
+    │        │        └─ amount
+    │        └─── Activity
+    │              └─ type (NOTE/TASK/CALL/EMAIL)
+    │              └─ completed
+    └─ domain
+    └─ notes
 ```
 
-### ポート競合
+### テーブル仕様
 
-`.env` ファイルでポート番号を変更してください：
-```
-API_PORT=8788
-NEXT_PUBLIC_API_URL=http://localhost:8788
-```
+- **User**: 認証ユーザー管理
+- **Company**: 企業マスタ（ユニーク制約: name）
+- **Lead**: リード（見込み客）管理
+- **Deal**: 案件管理（カンバンボード対応）
+- **Activity**: 活動履歴（タスク・メモ等）
 
-## ライセンス
+## 🚀 今後の拡張案
 
-MIT
+- [ ] メール通知機能
+- [ ] ファイルアップロード
+- [ ] レポート・分析機能
+- [ ] Webhook連携
+- [ ] モバイル対応（PWA）
+- [ ] 多言語対応（i18n）
+- [ ] リアルタイム更新（WebSocket）
+- [ ] 高度な権限管理（RBAC）
+
+## 📝 ライセンス
+
+MIT License - 商用利用可能
+
+## 🤝 コントリビューション
+
+Issue・PRお待ちしています！
+https://github.com/hirosuke0520/opus4-1-docker
+
+---
+
+Built with ❤️ using Next.js, Hono.js, Prisma, and Docker
