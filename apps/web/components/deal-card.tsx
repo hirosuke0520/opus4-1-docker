@@ -31,15 +31,9 @@ export default function DealCard({ deal, isDragging, onUpdateStage, stages }: De
       className={`bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow ${
         isDragging ? 'shadow-lg' : ''
       } ${isSortableDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-      {...attributes}
-      {...listeners}
     >
-      <a 
-        href={`/deals/${deal.id}`}
-        className="block"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="font-medium text-gray-900 mb-1 hover:text-primary-600">{deal.title}</h3>
+      <div {...attributes} {...listeners}>
+        <h3 className="font-medium text-gray-900 mb-1">{deal.title}</h3>
         <p className="text-sm text-gray-600 mb-2">
           ${parseFloat(deal.amount).toLocaleString()}
         </p>
@@ -51,7 +45,16 @@ export default function DealCard({ deal, isDragging, onUpdateStage, stages }: De
             Close: {new Date(deal.expectedCloseDate).toLocaleDateString()}
           </p>
         )}
-      </a>
+      </div>
+      
+      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+        <a 
+          href={`/deals/${deal.id}`}
+          className="text-xs text-primary-600 hover:text-primary-900 font-medium"
+        >
+          View Details →
+        </a>
+      </div>
       
       {onUpdateStage && stages && (
         <div className="mt-3 pt-3 border-t border-gray-100">
