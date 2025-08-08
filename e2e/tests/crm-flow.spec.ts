@@ -22,14 +22,14 @@ test.describe('CRM End-to-End Flow', () => {
     await expect(page.locator('h1')).toContainText('New Lead');
     
     // Fill lead form - wait for companies to load first
-    await page.waitForSelector('select[name="companyId"] option:nth-child(2)', { timeout: 5000 });
-    
-    // Select first available company
     const companySelect = page.locator('select[name="companyId"]');
-    const companyOptions = await companySelect.locator('option').all();
-    if (companyOptions.length > 1) {
-      const firstCompanyValue = await companyOptions[1].getAttribute('value');
-      await companySelect.selectOption(firstCompanyValue!);
+    // Wait for select to have options (companies loaded)
+    await expect(companySelect.locator('option')).toHaveCount(6, { timeout: 5000 }); // 1 placeholder + 5 companies
+    
+    // Select first real company (skip "Select a company" option)
+    const firstCompanyValue = await companySelect.locator('option:nth-child(2)').getAttribute('value');
+    if (firstCompanyValue) {
+      await companySelect.selectOption(firstCompanyValue);
     }
     
     await page.fill('input[name="contactName"]', 'Test Lead E2E');
@@ -54,19 +54,20 @@ test.describe('CRM End-to-End Flow', () => {
     await page.click('text=Add Deal');
     await page.waitForURL('/deals/new');
     
-    // Wait for leads to load
-    await page.waitForSelector('select[name="leadId"] option:nth-child(2)', { timeout: 5000 });
-    
-    // Select the lead we just created (should be at the top)
+    // Wait for leads to load (at least 2 options: placeholder + 1 lead)
     const leadSelect = page.locator('select[name="leadId"]');
+    await page.waitForTimeout(1000); // Give time for data to load
+    const leadOptionCount = await leadSelect.locator('option').count();
+    expect(leadOptionCount).toBeGreaterThan(1);
+    
+    // Find and select the lead we just created
     const leadOptions = await leadSelect.locator('option').all();
-    if (leadOptions.length > 1) {
-      // Find the option containing our test lead
-      for (const option of leadOptions) {
-        const text = await option.textContent();
-        if (text?.includes('Test Lead E2E')) {
-          const value = await option.getAttribute('value');
-          await leadSelect.selectOption(value!);
+    for (const option of leadOptions) {
+      const text = await option.textContent();
+      if (text?.includes('Test Lead E2E')) {
+        const value = await option.getAttribute('value');
+        if (value) {
+          await leadSelect.selectOption(value);
           break;
         }
       }
@@ -84,7 +85,8 @@ test.describe('CRM End-to-End Flow', () => {
     
     // 4. Change deal stage using dropdown
     // Wait for the deal card to appear
-    await page.waitForSelector('.bg-white:has-text("Test Deal E2E")', { timeout: 5000 });
+    await page.waitForTimeout(2000); // Give time for deal to load
+    await expect(page.locator('.bg-white').filter({ hasText: 'Test Deal E2E' }).first()).toBeVisible();
     
     const dealCard = page.locator('.bg-white').filter({ hasText: 'Test Deal E2E' }).first();
     const selectElement = dealCard.locator('select');
