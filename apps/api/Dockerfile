@@ -10,11 +10,10 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npx prisma generate
-# Copy entrypoint script
-COPY entrypoint.sh /app/
-RUN chmod +x /app/entrypoint.sh
+# Copy and set permissions for entrypoint script
+COPY --chmod=755 entrypoint.sh /app/entrypoint.sh
 EXPOSE 8787
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["sh", "/app/entrypoint.sh"]
 CMD ["npm", "run", "dev"]
 
 FROM base AS production
