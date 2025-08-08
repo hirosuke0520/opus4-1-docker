@@ -89,8 +89,8 @@ export default function DealsPage() {
     setDeals(updatedDeals);
     
     const newDealsByStage = { ...dealsByStage };
-    newDealsByStage[oldStage] = newDealsByStage[oldStage].filter(d => d.id !== dealId);
-    newDealsByStage[newStage] = [...newDealsByStage[newStage], updatedDeal];
+    newDealsByStage[oldStage] = (newDealsByStage[oldStage] || []).filter(d => d.id !== dealId);
+    newDealsByStage[newStage] = [...(newDealsByStage[newStage] || []), updatedDeal];
     setDealsByStage(newDealsByStage);
     
     try {
@@ -102,8 +102,8 @@ export default function DealsPage() {
       setDeals(deals);
       
       const rolledBackDealsByStage = { ...dealsByStage };
-      rolledBackDealsByStage[newStage] = rolledBackDealsByStage[newStage].filter(d => d.id !== dealId);
-      rolledBackDealsByStage[oldStage] = [...rolledBackDealsByStage[oldStage], deal];
+      rolledBackDealsByStage[newStage] = (rolledBackDealsByStage[newStage] || []).filter(d => d.id !== dealId);
+      rolledBackDealsByStage[oldStage] = [...(rolledBackDealsByStage[oldStage] || []), deal];
       setDealsByStage(rolledBackDealsByStage);
       
       alert('Failed to update deal stage. Please try again.');
@@ -122,8 +122,8 @@ export default function DealsPage() {
     setDeals(updatedDeals);
     
     const newDealsByStage = { ...dealsByStage };
-    newDealsByStage[oldStage] = newDealsByStage[oldStage].filter(d => d.id !== dealId);
-    newDealsByStage[newStage] = [...newDealsByStage[newStage], updatedDeal];
+    newDealsByStage[oldStage] = (newDealsByStage[oldStage] || []).filter(d => d.id !== dealId);
+    newDealsByStage[newStage] = [...(newDealsByStage[newStage] || []), updatedDeal];
     setDealsByStage(newDealsByStage);
     
     try {
@@ -134,8 +134,8 @@ export default function DealsPage() {
       setDeals(deals);
       
       const rolledBackDealsByStage = { ...dealsByStage };
-      rolledBackDealsByStage[newStage] = rolledBackDealsByStage[newStage].filter(d => d.id !== dealId);
-      rolledBackDealsByStage[oldStage] = [...rolledBackDealsByStage[oldStage], deal];
+      rolledBackDealsByStage[newStage] = (rolledBackDealsByStage[newStage] || []).filter(d => d.id !== dealId);
+      rolledBackDealsByStage[oldStage] = [...(rolledBackDealsByStage[oldStage] || []), deal];
       setDealsByStage(rolledBackDealsByStage);
       
       alert('Failed to update deal stage. Please try again.');
@@ -158,6 +158,14 @@ export default function DealsPage() {
           <p className="mt-2 text-sm text-gray-700">
             Drag and drop deals between stages or use the buttons to update their status
           </p>
+        </div>
+        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+          <a
+            href="/deals/new"
+            className="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto"
+          >
+            Add Deal
+          </a>
         </div>
       </div>
       
