@@ -60,7 +60,7 @@
 - Git
 - Node.js 20+ (E2Eテスト実行時のみ)
 
-### クイックスタート（5分で起動）
+### クイックスタート（3分で起動）
 
 ```bash
 # 1. リポジトリのクローン
@@ -70,16 +70,14 @@ cd opus4-1-docker
 # 2. 環境変数の設定
 cp .env.example .env
 
-# 3. Docker起動（初回はビルドに3-5分）
+# 3. Docker起動（初回はビルドに3-5分、マイグレーション・シード自動実行）
 docker compose up -d
 
-# 4. データベース初期化
-docker compose exec api npm run prisma:migrate
-docker compose exec api npm run prisma:seed
-
-# 5. ブラウザでアクセス
+# 4. ブラウザでアクセス
 open http://localhost:3000
 ```
+
+> 📝 **Note**: 初回起動時、データベースの準備とマイグレーション・シードが自動的に実行されます。
 
 ### アクセスURL
 
@@ -272,7 +270,7 @@ npm run test:ui
 | **ポート競合エラー** | 3000/8787番ポートが使用中 | `.env`でポート変更 |
 | **データベース接続エラー** | MySQLが起動していない | `docker compose restart db` |
 | **マイグレーションエラー** | スキーマ不整合 | `docker compose exec api npx prisma migrate reset` |
-| **ログインできない** | シードデータ未投入 | `docker compose exec api npm run prisma:seed` |
+| **ログインできない** | シードデータ未投入 | `docker compose restart api` (自動で再実行) |
 | **画面が表示されない** | ビルドエラー | `docker compose down && docker compose up -d --build` |
 
 ### デバッグコマンド
