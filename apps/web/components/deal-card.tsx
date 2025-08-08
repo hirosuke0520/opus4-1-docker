@@ -28,24 +28,30 @@ export default function DealCard({ deal, isDragging, onUpdateStage, stages }: De
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white p-4 rounded-lg shadow-sm border border-gray-200 ${
+      className={`bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow ${
         isDragging ? 'shadow-lg' : ''
       } ${isSortableDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
       {...attributes}
       {...listeners}
     >
-      <h3 className="font-medium text-gray-900 mb-1">{deal.title}</h3>
-      <p className="text-sm text-gray-600 mb-2">
-        ${parseFloat(deal.amount).toLocaleString()}
-      </p>
-      <p className="text-xs text-gray-500 mb-2">
-        {deal.lead?.company?.name} - {deal.lead?.contactName}
-      </p>
-      {deal.expectedCloseDate && (
-        <p className="text-xs text-gray-500 mb-3">
-          Close: {new Date(deal.expectedCloseDate).toLocaleDateString()}
+      <a 
+        href={`/deals/${deal.id}`}
+        className="block"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="font-medium text-gray-900 mb-1 hover:text-primary-600">{deal.title}</h3>
+        <p className="text-sm text-gray-600 mb-2">
+          ${parseFloat(deal.amount).toLocaleString()}
         </p>
-      )}
+        <p className="text-xs text-gray-500 mb-2">
+          {deal.lead?.company?.name} - {deal.lead?.contactName}
+        </p>
+        {deal.expectedCloseDate && (
+          <p className="text-xs text-gray-500 mb-3">
+            Close: {new Date(deal.expectedCloseDate).toLocaleDateString()}
+          </p>
+        )}
+      </a>
       
       {onUpdateStage && stages && (
         <div className="mt-3 pt-3 border-t border-gray-100">
