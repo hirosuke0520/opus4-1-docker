@@ -75,7 +75,19 @@ export default function DealsPage() {
     if (!over) return;
     
     const dealId = active.id as string;
-    const newStage = over.id as string;
+    let newStage = over.id as string;
+    
+    // If the over.id is a deal ID, find which stage it belongs to
+    const overDeal = deals.find(d => d.id === over.id);
+    if (overDeal) {
+      newStage = overDeal.stage;
+    }
+    
+    // Check if newStage is a valid stage
+    if (!STAGES.some(s => s.id === newStage)) {
+      console.error('Invalid stage:', newStage);
+      return;
+    }
     
     // Find the deal and its current stage
     const deal = deals.find(d => d.id === dealId);

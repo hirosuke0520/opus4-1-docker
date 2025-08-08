@@ -13,7 +13,13 @@ const createDealSchema = z.object({
   expectedCloseDate: z.string().datetime().optional(),
 });
 
-const updateDealSchema = createDealSchema.partial();
+const updateDealSchema = z.object({
+  leadId: z.string().uuid().optional(),
+  title: z.string().min(1).max(255).optional(),
+  amount: z.number().positive().optional(),
+  stage: z.enum(['PROSPECTING', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST']).optional(),
+  expectedCloseDate: z.string().datetime().optional().nullable(),
+});
 
 export function createDealRoutes(prisma: PrismaClient) {
   const deals = new Hono();
