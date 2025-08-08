@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(MEMBER)
+  createdAt    DateTime @default(now())
+
+  @@index([email])
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  domain    String?
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  
+  leads     Lead[]
+
+  @@index([name])
+}
+
+model Lead {
+  id          String     @id @default(uuid())
+  companyId   String
+  contactName String
+  email       String?
+  phone       String?
+  source      LeadSource @default(OTHER)
+  status      LeadStatus @default(NEW)
+  score       Int        @default(0)
+  createdAt   DateTime   @default(now())
+
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  deals       Deal[]
+  activities  Activity[]
+
+  @@index([status, createdAt])
+  @@index([companyId])
+  @@index([contactName])
+}
+
+model Deal {
+  id                String     @id @default(uuid())
+  leadId            String
+  title             String
+  amount            Decimal    @db.Decimal(15, 2)
+  stage             DealStage  @default(PROSPECTING)
+  expectedCloseDate DateTime?
+  createdAt         DateTime   @default(now())
+
+  lead              Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([stage])
+  @@index([leadId])
+}
+
+model Activity {
+  id        String       @id @default(uuid())
+  leadId    String
+  type      ActivityType
+  content   String       @db.Text
+  dueDate   DateTime?
+  completed Boolean      @default(false)
+  createdAt DateTime     @default(now())
+
+  lead      Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, completed, dueDate])
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+enum LeadSource {
+  WEB
+  REFERRAL
+  EVENT
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  QUALIFIED
+  LOST
+}
+
+enum DealStage {
+  PROSPECTING
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum ActivityType {
+  NOTE
+  TASK
+  CALL
+  EMAIL
+}

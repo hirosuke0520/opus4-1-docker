@@ -1,0 +1,20 @@
+FROM node:20-alpine AS base
+
+WORKDIR /app
+
+FROM base AS development
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npx prisma generate
+EXPOSE 8787
+CMD ["npm", "run", "dev"]
+
+FROM base AS production
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+EXPOSE 8787
+CMD ["npm", "start"]
